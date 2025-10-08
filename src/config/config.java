@@ -14,7 +14,7 @@ public static Connection connectDB() {
         try {
             Class.forName("org.sqlite.JDBC"); // Load the SQLite JDBC driver
             con = DriverManager.getConnection("jdbc:sqlite:vaccineDB.db"); // Establish connection
-            System.out.println("Connection Successful");
+//            System.out.println("Connection Successful");
         } catch (Exception e) {
             System.out.println("Connection Failed: " + e);
         }
@@ -151,6 +151,30 @@ public void deleteRecord(String sql, Object... values) {
         System.out.println("Error deleting record: " + e.getMessage());
     }
 }
+public java.util.List<java.util.Map<String, Object>> fetchRecords(String sqlQuery, Object... Values){
+    java.util.List<java.util.Map<String, Object>> records = new java.util.ArrayList<>();
     
-    
+    try(java.sql.Connection conn = this.connectDB();
+            java.sql.PreparedStatement pstmt = conn.prepareStatement(sqlQuery)){
+        
+        for(int i = 0; i < Values.length; i++){
+            pstmt.setObject(i + 1, Values[i]);
+        }
+        
+        java.sql.ResultSet rs = pstmt.executeQuery();
+        java.sql.ResultSetMetaData metaData = rs.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        
+        while (rs.next()){
+            java.util.Map<String, Object> row = new java.util.HashMap<>();
+            for(int i=1; i <= columnCount; i++){
+                row.put(metaData.getColumnName(i), rs.getObject(i));
+            }
+            records.add(row);
+        }
+    }catch(java.sql.SQLException e){
+        System.out.println("Error fetching records: "+e.getMessage());
+    }
+    return records;
+}
 }
